@@ -9,17 +9,18 @@ import pandas as pd
 url_1="https://datos.madrid.es/egob/catalogo/300228-21-accidentes-trafico-detalle.csv"
 data_1 = pd.read_csv(url_1, sep=";", encoding="latin1")
 data_1.head()
-print(data_1)
+data_1.dtypes
 
 url_2="https://datos.madrid.es/egob/catalogo/300228-19-accidentes-trafico-detalle.csv"
 data_2 = pd.read_csv(url_2, sep=";", encoding="latin1")
 data_2.drop(data_2.columns[len(data_2.columns)-1], axis=1, inplace=True)
 data_2.head()
-print(data_2)
-
+data_2.dtypes
+data_2 = data_2.rename(columns={"RANGO EDAD":"RANGO DE EDAD"})
 #Create only one data frame
 data_1 = data_1.append(pd.DataFrame(data = data_2), ignore_index=True)
-data1=data_1
+data1 = data_1
+data1.dtypes
 #import os
 #c=pd.read_csv("2020_Accidentalidad.csv", sep=";", encoding="latin1" )
 #c.head()
@@ -27,12 +28,13 @@ data1=data_1
 
 # Changes in dataset ------------------------------------------------------
 # Changes in column names
-data1 = data.rename(columns={"NÚMERO":"NUMERO","ESTADO METEREOLÓGICO":"ESTADO.METEREOLOGICO",\
+data1 = data1.rename(columns={"NÚMERO":"NUMERO","ESTADO METEREOLÓGICO":"ESTADO.METEREOLOGICO",\
     "TIPO VEHÍCULO":"TIPO.VEHICULO","LESIVIDAD*":"LESIVIDAD","Nº  EXPEDIENTE":"NEXPEDIENTE",\
-        "TIPO ACCIDENTE":"TIPO.ACCIDENTE","TIPO PERSONA":"TIPO.PERSONA","RANGO DE EDAD":"RANGO.DE.EDAD"})
+        "TIPO ACCIDENTE":"TIPO.ACCIDENTE","TIPO PERSONA":"TIPO.PERSONA","RANGO DE EDAD":"RANGO.EDAD"})
 list(data1.columns)
 
 #Create column of address
+data1 = data1.astype({'FECHA': 'str', 'NUMERO': 'str'})
 data1['ADDRESS'] =data1.apply(lambda x: '.'.join([x['CALLE'],', ',x['NUMERO'],', ','MADRID, SPAIN']),axis=1)
 list(data1.columns)
 data1.head()
@@ -44,8 +46,11 @@ data1['ADDRESS'] = data1['ADDRESS'].str.replace('\.','')
 #data1.loc[1,'ADDRESS']
 data1['ADDRESS'] = data1['ADDRESS'].str.replace(', -, ',', 0,')
 data1['ADDRESS'] = data1['ADDRESS'].str.replace(' NA, ','')
-data1 = data1.fillna('Unknown')
 
+#Replace all the NaN
+data1 = data1.fillna('Unknown')
+data1 = data1.replace('Se desconoce', 'Unknown')
+data1 = data1.replace('DESCONOCIDO', 'Unknown')
 #Eliminate all the names ("CALL.", "AV.", etc) that are not supported by geolocation & eliminate double direction.
 data1['ADDRESS'] = data1['ADDRESS'].str.replace('.*\\/','')
 data1['ADDRESS'] = data1['ADDRESS'].str.replace('.*\\. ','')
@@ -64,15 +69,51 @@ data1.loc[data1.LESIVIDAD==70,'INJURY']= 'Unknown'
 #data1 = data1.astype({'FECHA': 'float64', 'HORA': 'object'})
 data1['FECHA'] = pd.to_datetime(data1['FECHA'])
 data1['DAY'] = data1['FECHA'].dt.strftime('%A')
-data1['FECHA'] = data1['FECHA'].dt.strftime('%d/%m/%Y')
+
+#data1['FECHA'] = data1['FECHA'].dt.strftime('%d/%m/%Y')
 data1.dtypes
 
 #Create historical data
-#Create data outputs
+
 #Min data
+min_date = data1['FECHA'].min().strftime('%d/%m/%Y')
+min_date
+max_date = data1['FECHA'].max().strftime('%d/%m/%Y')
+max_date
+
+#Create data outputs
+#Date victims, accidents and fatal victims
+data_date = data1.groupby('FECHA')['NEXPEDIENTE'].count()
+data_date.head()
+data_date_victims = data1.groupby('FECHA').NEXPEDIENTE.nunique()
+data_date_victims.head()
+data_date_fvictims = data1[data1['INJURY'] == 'Fatal'].groupby('FECHA')['NEXPEDIENTE'].count()
+data_date_fvictims.head()
+
+#Data 2020
+data = data1[(data1['FECHA'] > '2019-12-31')]
+data.head()
+data
+
 #Total accidents 2020
+total_acc = data.NEXPEDIENTE.nunique()
+total_acc
 #Total victims
+total_vic = data.NEXPEDIENTE.count()
+total_vic
 #Total fatal victims
+total_fvic = data[data['INJURY'] == 'Fatal'].NEXPEDIENTE.count()
+total_fvic
+
+
+data1.groupby(['TIPO.VEHICULO']).groups.keys()
+data1.groupby('DAY')['NEXPEDIENTE'].count()
+data1.groupby('ESTADO.METEREOLOGICO')['NEXPEDIENTE'].count()
+data1.groupby('ESTADO.METEREOLOGICO').data1['DAY']=='Monday'.count()
+data1[data1['INJURY'] == 'Fatal'].groupby('DAY')['NEXPEDIENTE'].count()
+data1[data1['INJURY'] == 'Fatal'].groupby(['DAY','NEXPEDIENTE']).count()
+data1[data1['INJURY'] == 'Fatal'].groupby('DAY').NEXPEDIENTE.nunique()
+data1.groupby('INJURY')['NEXPEDIENTE'].count()
 
 
 app.layout = html.Div(children=[
