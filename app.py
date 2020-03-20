@@ -105,6 +105,23 @@ total_vic
 total_fvic = data[data['INJURY'] == 'Fatal'].NEXPEDIENTE.count()
 total_fvic
 
+#Weather
+weather_vic = data.groupby(['TIPO.ACCIDENTE','ESTADO.METEREOLOGICO'])['NEXPEDIENTE'].count()
+weather_acc = data.groupby(['TIPO.ACCIDENTE','ESTADO.METEREOLOGICO']).NEXPEDIENTE.nunique()
+
+#Injury
+injury_vic = data.groupby(['TIPO.ACCIDENTE','INJURYO'])['NEXPEDIENTE'].count()
+injury_acc = data.groupby(['TIPO.ACCIDENTE','INJURY']).NEXPEDIENTE.nunique()
+
+#District
+district_acc = data.groupby(['TIPO.ACCIDENTE','DISTRITO']).NEXPEDIENTE.nunique()
+district_type = data.groupby(['TIPO.ACCIDENTE', 'DISTRITO','TIPO.PERSONA'])['NEXPEDIENTE'].count()
+
+#Total
+total_data_acc = data.groupby('TIPO.ACCIDENTE').NEXPEDIENTE.nunique()
+total_data_vic = data.groupby('TIPO.ACCIDENTE')['NEXPEDIENTE'].count()
+total_data = pd.merge(total_data,total_data_vic, on='TIPO.ACCIDENTE')
+total_data = total_data.rename(columns={'NEXPEDIENTE_x':'Accidents','NEXPEDIENTE_y':'Victims'})
 
 data1.groupby(['TIPO.VEHICULO']).groups.keys()
 data1.groupby('DAY')['NEXPEDIENTE'].count()
