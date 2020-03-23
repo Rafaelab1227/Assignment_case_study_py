@@ -54,6 +54,12 @@ data1 = data1.replace('DESCONOCIDO', 'Unknown')
 #Eliminate all the names ("CALL.", "AV.", etc) that are not supported by geolocation & eliminate double direction.
 data1['ADDRESS'] = data1['ADDRESS'].str.replace('.*\\/','')
 data1['ADDRESS'] = data1['ADDRESS'].str.replace('.*\\. ','')
+data1['ADDRESS'] = data1['ADDRESS'].str.replace('CALL ','')
+data1['ADDRESS'] = data1['ADDRESS'].str.replace('AVDA ','')
+data1['ADDRESS'] = data1['ADDRESS'].str.replace('GTA ','')
+data1['ADDRESS'] = data1['ADDRESS'].str.replace('CTRA ','')
+data1['ADDRESS'] = data1['ADDRESS'].str.replace('CALLE ','')
+
 #data1.loc[105,]
 
 #Change levels of injury based on dataset dictionary
@@ -110,7 +116,7 @@ weather_vic = data.groupby(['TIPO.ACCIDENTE','ESTADO.METEREOLOGICO'])['NEXPEDIEN
 weather_acc = data.groupby(['TIPO.ACCIDENTE','ESTADO.METEREOLOGICO']).NEXPEDIENTE.nunique()
 
 #Injury
-injury_vic = data.groupby(['TIPO.ACCIDENTE','INJURYO'])['NEXPEDIENTE'].count()
+injury_vic = data.groupby(['TIPO.ACCIDENTE','INJURY'])['NEXPEDIENTE'].count()
 injury_acc = data.groupby(['TIPO.ACCIDENTE','INJURY']).NEXPEDIENTE.nunique()
 
 #District
@@ -120,8 +126,9 @@ district_type = data.groupby(['TIPO.ACCIDENTE', 'DISTRITO','TIPO.PERSONA'])['NEX
 #Total
 total_data_acc = data.groupby('TIPO.ACCIDENTE').NEXPEDIENTE.nunique()
 total_data_vic = data.groupby('TIPO.ACCIDENTE')['NEXPEDIENTE'].count()
-total_data = pd.merge(total_data,total_data_vic, on='TIPO.ACCIDENTE')
+total_data = pd.merge(total_data_acc,total_data_vic, on='TIPO.ACCIDENTE')
 total_data = total_data.rename(columns={'NEXPEDIENTE_x':'Accidents','NEXPEDIENTE_y':'Victims'})
+total_data
 
 data1.groupby(['TIPO.VEHICULO']).groups.keys()
 data1.groupby('DAY')['NEXPEDIENTE'].count()
@@ -132,6 +139,30 @@ data1[data1['INJURY'] == 'Fatal'].groupby(['DAY','NEXPEDIENTE']).count()
 data1[data1['INJURY'] == 'Fatal'].groupby('DAY').NEXPEDIENTE.nunique()
 data1.groupby('INJURY')['NEXPEDIENTE'].count()
 
+#Geolocalization function
+locations = data[data['INJURY'] == 'Fatal'].ADDRESS
+locations
+
+def geofunction(location):
+    url = 'http://nominatim.openstreetmap.org/search/@addr@?format=json&addressdetails=0&limit=1'
+    url1 = url.replace('@addr@',location)
+    s=[]
+    s=requests.get(url1).json()
+    if not s:
+        result=pd.DataFrame(np.nan, index=[0, 1], columns=['lat', 'lon'])
+    else:
+        result=pd.DataFrame({'lat':s[0]['lat'], 'lon':s[0]['lon']}, index=[0])
+    
+    return result
+
+results = pd.DataFrame(columns=['lat','lon'])
+for i in range(len(locations)):
+    location = locations.values[i].lstrip()
+    location1 = location.replace(' ','%20')
+    result = geofunction(location1)
+    results= results.append(result, ignore_index=True)
+
+results
 
 app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
