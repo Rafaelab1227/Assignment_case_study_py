@@ -149,7 +149,7 @@ def geofunction(location):
     s=[]
     s=requests.get(url1).json()
     if not s:
-        result=pd.DataFrame(np.nan, index=[0, 1], columns=['lat', 'lon'])
+        result=pd.DataFrame(np.nan, index=[0], columns=['lat', 'lon'])
     else:
         result=pd.DataFrame({'lat':s[0]['lat'], 'lon':s[0]['lon']}, index=[0])
     
@@ -163,6 +163,17 @@ for i in range(len(locations)):
     results= results.append(result, ignore_index=True)
 
 results
+#Data frames of detail of fatal victims divided by in there was a geolocation identified or not. 
+data_vic = data[data['INJURY'] == 'Fatal']
+data_vic = pd.concat([data_vic.reset_index(drop=True), results], axis=1)
+list(data_vic.columns)
+data_c = data_vic.dropna(subset=['lat', 'lon']).reset_index()
+data_nc = data_vic[pd.isnull(data_vic).any(axis=1)].reset_index()
+data_c = data_c[['CALLE','NUMERO','DISTRITO','RANGO.EDAD','TIPO.ACCIDENTE']]
+data_nc = data_nc[['CALLE','NUMERO','DISTRITO','RANGO.EDAD','TIPO.ACCIDENTE']]
+list(data_nc.columns)
+data_nc.columns= ["Street", "Number", "District", "Age", "Type of accident"] # no complete
+data_c.columns= ["Street", "Number", "District", "Age", "Type of accident"]# complete cases with geolocation
 
 app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
