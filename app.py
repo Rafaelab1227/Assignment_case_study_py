@@ -104,6 +104,10 @@ data = data1[(data1['FECHA'] > '2019-12-31')]
 #data.head()
 #data
 
+#Types
+types = data1['TIPO.ACCIDENTE'].sort_values().unique()
+types_dict = [{'label': x, 'value': x} for x in types]
+
 #Total accidents 2020
 total_acc = data.NEXPEDIENTE.nunique()
 #total_acc
@@ -198,6 +202,7 @@ total_data_pl = total_data.unstack().reset_index()
 total_data_pl.columns = ['Variable', 'Type of accident', 'Total']
 #fig1 = sns.barplot(y="Type of accident", hue="Variable", x="Total", data=total_data_pl)
 #plt.show()
+
 fig1=px.bar(total_data_pl, x="Type of accident", y="Total", color='Variable', barmode='group')
 
 #Plot per district
@@ -266,6 +271,20 @@ fig7.update_layout(
     )
 )
 
+#Tables
+#Table map
+def tablefunction(dataframe):
+    return html.Table([
+        html.Thead(
+            html.Tr([html.Th(col) for col in dataframe.columns])
+        ),
+        html.Tbody([
+            html.Tr([
+                html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+            ]) for i in range(len(dataframe))
+        ])
+    ])
+
 #Accidents per district
 #import plotly.express as px
 #fig = px.bar(district_acc, x='DISTRITO', y='NEXPEDIENTE')
@@ -283,6 +302,11 @@ app.layout = html.Div(children=[
     html.Div(children='''
         Dash: A web application framework for Python.
     '''),
+    dcc.Checklist(
+        id="type_selector",
+        options=types_dict,
+        value=types
+    ),  
     dcc.Graph(figure=fig1),
     dcc.Graph(
         id='example-graph',
@@ -300,7 +324,9 @@ app.layout = html.Div(children=[
     dcc.Graph(figure=fig4),
     dcc.Graph(figure=fig5),
     dcc.Graph(figure=fig6),
-    dcc.Graph(figure=fig7)   
+    dcc.Graph(figure=fig7),
+    tablefunction(data_nc),
+    tablefunction(data_c)   
 ])
 
 if __name__ == '__main__':
