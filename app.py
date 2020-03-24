@@ -2,6 +2,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output, State
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -203,7 +204,6 @@ total_data_pl.columns = ['Variable', 'Type of accident', 'Total']
 #fig1 = sns.barplot(y="Type of accident", hue="Variable", x="Total", data=total_data_pl)
 #plt.show()
 
-fig1=px.bar(total_data_pl, x="Type of accident", y="Total", color='Variable', barmode='group')
 
 #Plot per district
 fig2=px.bar(district_type, x='DISTRITO', y='NEXPEDIENTE', color='TIPO.PERSONA')
@@ -307,7 +307,7 @@ app.layout = html.Div(children=[
         options=types_dict,
         value=types
     ),  
-    dcc.Graph(figure=fig1),
+    dcc.Graph(id='fig1'),
     dcc.Graph(
         id='example-graph',
         figure={
@@ -328,6 +328,20 @@ app.layout = html.Div(children=[
     tablefunction(data_nc),
     tablefunction(data_c)   
 ])
+
+#def filter_dataframe(df, type_selector):
+    
+#    return dff
+
+@app.callback(
+    Output('fig1', 'figure'),
+    [Input('type_selector', 'value')])
+def update_figure(type_selector):
+    #filtered_df = total_data_pl[total_data_pl['Type of accident'] == i]
+    filtered_df = total_data_pl[total_data_pl['Type of accident'].isin(type_selector)]
+    figure =px.bar(filtered_df, x="Type of accident", y="Total", color='Variable', barmode='group')
+    return figure
+    
 
 if __name__ == '__main__':
     app.run_server(debug=True)
