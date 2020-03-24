@@ -37,7 +37,7 @@ data1 = data1.rename(columns={"NÚMERO":"NUMERO","ESTADO METEREOLÓGICO":"ESTADO
 list(data1.columns)
 
 #Create column of address
-data1 = data1.astype({'FECHA': 'str', 'NUMERO': 'str'})
+data1 = data1.astype({'NUMERO': 'str'})
 data1['ADDRESS'] =data1.apply(lambda x: '.'.join([x['CALLE'],', ',x['NUMERO'],', ','MADRID, SPAIN']),axis=1)
 #list(data1.columns)
 #data1.head()
@@ -76,7 +76,7 @@ data1.loc[data1.LESIVIDAD==70,'INJURY']= 'Unknown'
 
 #Change type of variables
 #data1 = data1.astype({'FECHA': 'float64', 'HORA': 'object'})
-data1['FECHA'] = pd.to_datetime(data1['FECHA'])
+data1['FECHA'] = pd.to_datetime(data1['FECHA'],dayfirst=True)
 data1['DAY'] = data1['FECHA'].dt.strftime('%A')
 
 #data1['FECHA'] = data1['FECHA'].dt.strftime('%d/%m/%Y')
@@ -132,6 +132,16 @@ total_data_vic = data.groupby('TIPO.ACCIDENTE')['NEXPEDIENTE'].count()
 total_data = pd.merge(total_data_acc,total_data_vic, on='TIPO.ACCIDENTE')
 total_data = total_data.rename(columns={'NEXPEDIENTE_x':'Accidents','NEXPEDIENTE_y':'Victims'})
 #total_data
+
+#Historical data
+days = data1.groupby('DAY').NEXPEDIENTE.nunique().reset_index()
+historical_acc =  data1.groupby('FECHA').NEXPEDIENTE.nunique()
+historical_vic =  data1.groupby('FECHA').NEXPEDIENTE.count()
+historical_fvic = data1[data1['INJURY'] == 'Fatal'].groupby('FECHA').NEXPEDIENTE.count()
+historical_data = pd.merge(historical_acc,historical_vic,how='outer', on='FECHA')
+historical_data = pd.merge(historical_data,historical_fvic, how='outer',on='FECHA').reset_index()
+historical_data.columns = ['Date','Accidents', 'Victims', 'Fatal victims']
+historical_data = historical_data.fillna('0')
 
 # data1.groupby(['TIPO.VEHICULO']).groups.keys()
 # data1.groupby('DAY')['NEXPEDIENTE'].count()
@@ -204,7 +214,7 @@ fig2.update_layout(
 #Pie chart weather victims
 fig3 = px.pie(weather_vic, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
 
-#Pie chart weather acidents
+#Pie chart weather accidents
 fig4 = px.pie(weather_acc, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
 
 #Injury level
@@ -214,6 +224,47 @@ fig5 = go.Figure(data=[go.Bar(
             text=injury_vic['NEXPEDIENTE'],
             textposition='auto'
         )])
+
+#Pie chart days accidents
+fig6 = px.pie(days, values='NEXPEDIENTE', names='DAY')
+
+#Bar chart historical
+fig7 = go.Figure()
+fig7.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Accidents'], name="Accidents",
+                         marker_color='deepskyblue'))
+fig7.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Victims'], name="Victims",
+                         marker_color='dimgray'))
+fig7.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Fatal victims'], name="Fatal Victims",
+                         marker_color='green'))
+fig7.update_layout(
+    xaxis=dict(
+        rangeselector=dict(
+            buttons=list([
+                dict(count=1,
+                     label="Last m",
+                     step="month",
+                     stepmode="backward"),
+                dict(count=6,
+                     label="6 m",
+                     step="month",
+                     stepmode="backward"),
+                dict(count=1,
+                     label="Year",
+                     step="year",
+                     stepmode="backward"),
+                dict(count=1,
+                     label="YTD",
+                     step="year",
+                     stepmode="todate"),
+                dict(step="all")
+            ])
+        ),
+        rangeslider=dict(
+            visible=True
+        ),
+        type="date"
+    )
+)
 
 #Accidents per district
 #import plotly.express as px
@@ -247,7 +298,9 @@ app.layout = html.Div(children=[
     dcc.Graph(figure=fig2),
     dcc.Graph(figure=fig3),
     dcc.Graph(figure=fig4),
-    dcc.Graph(figure=fig5)    
+    dcc.Graph(figure=fig5),
+    dcc.Graph(figure=fig6),
+    dcc.Graph(figure=fig7)   
 ])
 
 if __name__ == '__main__':
