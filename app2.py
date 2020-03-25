@@ -119,6 +119,14 @@ total_vic = data.NEXPEDIENTE.count()
 total_fvic = data[data['INJURY'] == 'Fatal'].NEXPEDIENTE.count()
 #total_fvic
 
+#Weather
+weather_vic = data.groupby('ESTADO.METEREOLOGICO')['NEXPEDIENTE'].count().reset_index()
+weather_acc = data.groupby(['ESTADO.METEREOLOGICO']).NEXPEDIENTE.nunique().reset_index()
+
+#Injury
+injury_vic = data.groupby(['INJURY'])['NEXPEDIENTE'].count().reset_index()
+injury_acc = data.groupby(['TIPO.ACCIDENTE','INJURY']).NEXPEDIENTE.nunique()
+
 #Total
 total_data_acc = data.groupby('TIPO.ACCIDENTE').NEXPEDIENTE.nunique()
 total_data_vic = data.groupby('TIPO.ACCIDENTE')['NEXPEDIENTE'].count()
@@ -186,22 +194,39 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 #Simple plot for total
+#import seaborn as sns
 total_data_pl = total_data.unstack().reset_index()
 total_data_pl.columns = ['Variable', 'TIPO.ACCIDENTE', 'Total']
+#fig1 = sns.barplot(y="Type of accident", hue="Variable", x="Total", data=total_data_pl)
+#plt.show()
 
+
+#Pie chart weather victims
+fig3 = px.pie(weather_vic, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
+
+#Pie chart weather accidents
+fig4 = px.pie(weather_acc, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
+
+#Injury level
+fig5 = go.Figure(data=[go.Bar(
+            x=injury_vic['INJURY'],
+            y=injury_vic['NEXPEDIENTE'],
+            text=injury_vic['NEXPEDIENTE'],
+            textposition='auto'
+        )])
 
 #Pie chart days accidents
-fig7 = px.pie(days, values='NEXPEDIENTE', names='DAY')
+fig6 = px.pie(days, values='NEXPEDIENTE', names='DAY')
 
 #Bar chart historical
-fig8 = go.Figure()
-fig8.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Accidents'], name="Accidents",
+fig7 = go.Figure()
+fig7.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Accidents'], name="Accidents",
                          marker_color='deepskyblue'))
-fig8.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Victims'], name="Victims",
+fig7.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Victims'], name="Victims",
                          marker_color='dimgray'))
-fig8.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Fatal victims'], name="Fatal Victims",
+fig7.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Fatal victims'], name="Fatal Victims",
                          marker_color='green'))
-fig8.update_layout(
+fig7.update_layout(
     xaxis=dict(
         rangeselector=dict(
             buttons=list([
@@ -245,6 +270,13 @@ def tablefunction(dataframe):
         ])
     ])
 
+#Accidents per district
+#import plotly.express as px
+#fig = px.bar(district_acc, x='DISTRITO', y='NEXPEDIENTE')
+#fig.show()
+
+
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -263,9 +295,9 @@ app.layout = html.Div(children=[
     dcc.Graph(id='fig1'),
     dcc.Graph(id='fig2'),
     dcc.Graph(id='fig3'),
-    dcc.Graph(id='fig4'),
-    dcc.Graph(id='fig5'),
-    dcc.Graph(id='fig6'),
+    dcc.Graph(figure=fig4),
+    dcc.Graph(figure=fig5),
+    dcc.Graph(figure=fig6),
     dcc.Graph(figure=fig7),
     dcc.Graph(figure=fig8),
     tablefunction(data_nc),
@@ -279,10 +311,7 @@ def filter_dataframe(df, type_selector):
 @app.callback(
     [Output('fig1', 'figure'),
     Output('fig2', 'figure'),
-    Output('fig3', 'figure'),
-    Output('fig4', 'figure'),
-    Output('fig5', 'figure'),
-    Output('fig6', 'figure')],
+    Output('fig3', 'figure')],
     [Input('type_selector', 'value')])
 def update_figure(type_selector):
     #Total
@@ -290,38 +319,22 @@ def update_figure(type_selector):
     figure1 =px.bar(fil_df, x="TIPO.ACCIDENTE", y="Total", color='Variable', barmode='group')
     #District
     fil_df2 = filter_dataframe(data,type_selector)
-        #Plot per ditrict accidents
+    #Plot per ditrict accidents
     district_acc = fil_df2.groupby(['DISTRITO']).NEXPEDIENTE.nunique().reset_index()
-    figure2 = go.Figure(data=[go.Bar(x=district_acc['DISTRITO'], y=district_acc['NEXPEDIENTE'])])
-        #Plot per district victims by type
-    district_vic = fil_df2.groupby(['DISTRITO','TIPO.PERSONA'])['NEXPEDIENTE'].count().reset_index()
-    figure3=px.bar(district_vic, x='DISTRITO', y='NEXPEDIENTE', color='TIPO.PERSONA')
-    figure3.update_layout(
-        xaxis_title="District",
-        yaxis_title="Victims",
-        font=dict(
-             family="Courier New, monospace",
-             size=18,
-             color="#7f7f7f"
-         )
-    )
-    #Weather
-    #Pie chart weather victims
-    weather_vic = fil_df2.groupby('ESTADO.METEREOLOGICO')['NEXPEDIENTE'].count().reset_index()
-    figure4 = px.pie(weather_vic, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
-    #Pie chart weather accidents
-    weather_acc = fil_df2.groupby(['ESTADO.METEREOLOGICO']).NEXPEDIENTE.nunique().reset_index()
-    figure5 = px.pie(weather_acc, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
-
-    #Injury
-    injury_vic = fil_df2.groupby(['INJURY'])['NEXPEDIENTE'].count().reset_index()
-    #Injury level
-    figure6 = go.Figure(data=[go.Bar(
-                x=injury_vic['INJURY'],
-                y=injury_vic['NEXPEDIENTE'],
-                text=injury_vic['NEXPEDIENTE'],
-                textposition='auto'
-            )])
-    return figure1, figure2, figure3, figure4, figure5, figure6  
+    figure2 =go.Figure(data=[go.Bar(x=district_acc['DISTRITO'], y=district_acc['NEXPEDIENTE'])
+    return figure1, figure2
+    #Plot per district victims by type
+    #district_vic = fil_df2.groupby(['DISTRITO','TIPO.PERSONA'])['NEXPEDIENTE'].count().reset_index()
+    #figure3=px.bar(district_vic, x='DISTRITO', y='NEXPEDIENTE', color='TIPO.PERSONA')
+    #figure3.update_layout(
+        # xaxis_title="District",
+        # yaxis_title="Victims",
+        # font=dict(
+        #     family="Courier New, monospace",
+        #     size=18,
+        #     color="#7f7f7f"
+        # )
+    #)f
+    
 if __name__ == '__main__':
     app.run_server(debug=True)
