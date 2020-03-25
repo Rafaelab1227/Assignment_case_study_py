@@ -129,7 +129,6 @@ injury_acc = data.groupby(['TIPO.ACCIDENTE','INJURY']).NEXPEDIENTE.nunique()
 
 #District
 district_acc = data.groupby(['DISTRITO']).NEXPEDIENTE.nunique().reset_index()
-district_type = data.groupby(['DISTRITO','TIPO.PERSONA'])['NEXPEDIENTE'].count().reset_index()
 
 #Total
 total_data_acc = data.groupby('TIPO.ACCIDENTE').NEXPEDIENTE.nunique()
@@ -200,22 +199,11 @@ import plotly.graph_objects as go
 #Simple plot for total
 #import seaborn as sns
 total_data_pl = total_data.unstack().reset_index()
-total_data_pl.columns = ['Variable', 'Type of accident', 'Total']
+total_data_pl.columns = ['Variable', 'TIPO.ACCIDENTE', 'Total']
 #fig1 = sns.barplot(y="Type of accident", hue="Variable", x="Total", data=total_data_pl)
 #plt.show()
 
 
-#Plot per district
-fig2=px.bar(district_type, x='DISTRITO', y='NEXPEDIENTE', color='TIPO.PERSONA')
-fig2.update_layout(
-    xaxis_title="District",
-    yaxis_title="Victims",
-    font=dict(
-        family="Courier New, monospace",
-        size=18,
-        color="#7f7f7f"
-    )
-)
 #Pie chart weather victims
 fig3 = px.pie(weather_vic, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
 
@@ -319,7 +307,7 @@ app.layout = html.Div(children=[
             }
         }
     ),
-    dcc.Graph(figure=fig2),
+    dcc.Graph(id='fig2'),
     dcc.Graph(figure=fig3),
     dcc.Graph(figure=fig4),
     dcc.Graph(figure=fig5),
@@ -329,18 +317,31 @@ app.layout = html.Div(children=[
     tablefunction(data_c)   
 ])
 
-#def filter_dataframe(df, type_selector):
-    
-#    return dff
+def filter_dataframe(df, type_selector):
+    dff = df[df['TIPO.ACCIDENTE'].isin(type_selector)]
+    return dff
 
 @app.callback(
-    Output('fig1', 'figure'),
+    [Output('fig1', 'figure'),
+    Output('fig2', 'figure')],
     [Input('type_selector', 'value')])
 def update_figure(type_selector):
-    #filtered_df = total_data_pl[total_data_pl['Type of accident'] == i]
-    filtered_df = total_data_pl[total_data_pl['Type of accident'].isin(type_selector)]
-    figure =px.bar(filtered_df, x="Type of accident", y="Total", color='Variable', barmode='group')
-    return figure
+    fil_df = filter_dataframe(total_data_pl,type_selector)
+    figure1 =px.bar(fil_df, x="TIPO.ACCIDENTE", y="Total", color='Variable', barmode='group')
+    #Plot per district
+    fil_df2 = filter_dataframe(data,type_selector)
+    district_type = fil_df2.groupby(['DISTRITO','TIPO.PERSONA'])['NEXPEDIENTE'].count().reset_index()
+    figure2=px.bar(district_type, x='DISTRITO', y='NEXPEDIENTE', color='TIPO.PERSONA')
+    figure2.update_layout(
+        xaxis_title="District",
+        yaxis_title="Victims",
+        font=dict(
+            family="Courier New, monospace",
+            size=18,
+            color="#7f7f7f"
+        )
+    )
+    return figure1, figure2
     
 
 if __name__ == '__main__':
