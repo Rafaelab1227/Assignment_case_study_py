@@ -222,46 +222,58 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
 
-    html.Div(children='''
+    dcc.Tabs(id="tabs", children=[
+        # Defining the layout of the first Tab
+        dcc.Tab(label='Description', children=[
+            html.Div(children='''
         Dash: A web application framework for Python.
-    '''),
-    dcc.Checklist(
-        id="type_selector",
-        options=types_dict,
-        value=types
-    ),  
-    dcc.Graph(id='fig1'),
-    dash_table.DataTable(id='hover-data',
-                        columns=[{"name": i, "id": i} for i in fill_data_vic.columns]),
-    dcc.Graph(id='fig2'),
-    dcc.Graph(id='fig3'),
-    dcc.Graph(id='fig4'),
-    dcc.Graph(id='fig5'),
-    dcc.Graph(id='fig6'),
-    dash_table.DataTable(id='hover-data2',
-                    columns=[{"name": i, "id": i} for i in fill_data_inj.columns]),
-    dcc.Checklist(
-        id="level_selector",
-        options=levels_dict,
-        value=levels
-    ),
-    dcc.Graph(id='fig7'),
-    dcc.DatePickerRange(
-        id='my-date-picker-range',
-        min_date_allowed=data1['FECHA'].min(),
-        max_date_allowed=data1['FECHA'].max(),
-        initial_visible_month=data1['FECHA'].min(),
-        start_date=data1['FECHA'].min(),
-        end_date=data1['FECHA'].max()
-    ),
-    dbc.Button('Update filter', 
-                           color="warning", 
-                           className="mr-1",
-                           id='my-button'),
-    html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
-    dcc.Graph(id='fig8'),
-    tablefunction(data_nc),
-    tablefunction(data_c)   
+    ''')
+        ]),
+        dcc.Tab(label='Type', children=[
+
+            dcc.Checklist(
+                id="type_selector",
+                options=types_dict,
+                value=types
+            ),  
+            dcc.Graph(id='fig1'),
+            dash_table.DataTable(id='hover-data',
+                                columns=[{"name": i, "id": i} for i in fill_data_vic.columns]),
+            dcc.Graph(id='fig2'),
+            dcc.Graph(id='fig3'),
+            dcc.Graph(id='fig4'),
+            dcc.Graph(id='fig5'),
+            dcc.Graph(id='fig6'),
+            dash_table.DataTable(id='hover-data2',
+                            columns=[{"name": i, "id": i} for i in fill_data_inj.columns])
+        ]),
+        dcc.Tab(label='Date', children=[
+            dcc.DatePickerRange(
+                id='my-date-picker-range',
+                min_date_allowed=data1['FECHA'].min(),
+                max_date_allowed=data1['FECHA'].max(),
+                initial_visible_month=data1['FECHA'].min(),
+                start_date=data1['FECHA'].min(),
+                end_date=data1['FECHA'].max()
+            ),
+            dbc.Button('Update filter', 
+                                color="warning", 
+                                className="mr-1",
+                                id='my-button'),
+            html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
+            dcc.Graph(id='fig8'),
+            dcc.Checklist(
+                id="level_selector",
+                options=levels_dict,
+                value=levels
+            ),
+            dcc.Graph(id='fig7'),
+        ]),
+        dcc.Tab(label='Location', children=[
+            tablefunction(data_nc),
+            tablefunction(data_c)   
+        ])
+    ])
 ])
 
 def filter_dataframe(df, type_selector):
@@ -292,11 +304,6 @@ def update_figure(type_selector):
     figure3.update_layout(
         xaxis_title="District",
         yaxis_title="Victims",
-        font=dict(
-             family="Courier New, monospace",
-             size=18,
-             color="#7f7f7f"
-         )
     )
     #Weather
     #Pie chart weather victims
