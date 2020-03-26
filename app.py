@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
-styles = {
-    'pre': {
-        'border': 'thin lightgrey solid',
-        'overflowY': 'scroll'
-    }
-}
 import json
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+import dash_bootstrap_components as dbc
+from datetime import datetime
+from dateutil.parser import parse
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -117,6 +114,10 @@ data = data1[(data1['FECHA'] > '2019-12-31')]
 types = data1['TIPO.ACCIDENTE'].sort_values().unique()
 types_dict = [{'label': x, 'value': x} for x in types]
 
+#Levels
+levels = data1['INJURY'].sort_values().unique()
+levels_dict = [{'label': x, 'value': x} for x in levels]
+
 #Total accidents 2020
 total_acc = data.NEXPEDIENTE.nunique()
 #total_acc
@@ -141,15 +142,6 @@ fill_data_vic.columns = ['Type of accident','Type of victim', 'Total victims']
 #Subset by injury level
 fill_data_inj = data.groupby(['INJURY','RANGO.EDAD'])['NEXPEDIENTE'].count().reset_index()
 
-#Historical data
-days = data1.groupby('DAY').NEXPEDIENTE.nunique().reset_index()
-historical_acc =  data1.groupby('FECHA').NEXPEDIENTE.nunique()
-historical_vic =  data1.groupby('FECHA').NEXPEDIENTE.count()
-historical_fvic = data1[data1['INJURY'] == 'Fatal'].groupby('FECHA').NEXPEDIENTE.count()
-historical_data = pd.merge(historical_acc,historical_vic,how='outer', on='FECHA')
-historical_data = pd.merge(historical_data,historical_fvic, how='outer',on='FECHA').reset_index()
-historical_data.columns = ['Date','Accidents', 'Victims', 'Fatal victims']
-historical_data = historical_data.fillna('0')
 
 # data1.groupby(['TIPO.VEHICULO']).groups.keys()
 # data1.groupby('DAY')['NEXPEDIENTE'].count()
@@ -208,46 +200,6 @@ total_data_pl = total_data.unstack().reset_index()
 total_data_pl.columns = ['Variable', 'TIPO.ACCIDENTE', 'Total']
 
 
-#Pie chart days accidents
-fig7 = px.pie(days, values='NEXPEDIENTE', names='DAY')
-
-#Bar chart historical
-fig8 = go.Figure()
-fig8.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Accidents'], name="Accidents",
-                         marker_color='deepskyblue'))
-fig8.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Victims'], name="Victims",
-                         marker_color='dimgray'))
-fig8.add_trace(go.Bar(x=historical_data.Date, y=historical_data['Fatal victims'], name="Fatal Victims",
-                         marker_color='green'))
-fig8.update_layout(
-    xaxis=dict(
-        rangeselector=dict(
-            buttons=list([
-                dict(count=1,
-                     label="Last m",
-                     step="month",
-                     stepmode="backward"),
-                dict(count=6,
-                     label="6 m",
-                     step="month",
-                     stepmode="backward"),
-                dict(count=1,
-                     label="Year",
-                     step="year",
-                     stepmode="backward"),
-                dict(count=1,
-                     label="YTD",
-                     step="year",
-                     stepmode="todate"),
-                dict(step="all")
-            ])
-        ),
-        rangeslider=dict(
-            visible=True
-        ),
-        type="date"
-    )
-)
 
 #Tables
 #Table map
@@ -288,8 +240,22 @@ app.layout = html.Div(children=[
     dcc.Graph(id='fig6'),
     dash_table.DataTable(id='hover-data2',
                     columns=[{"name": i, "id": i} for i in fill_data_inj.columns]),
-    dcc.Graph(figure=fig7),
-    dcc.Graph(figure=fig8),
+    dcc.Checklist(
+        id="level_selector",
+        options=levels_dict,
+        value=levels
+    ),
+    dcc.Graph(id='fig7'),
+    dcc.DatePickerRange(
+        id='my-date-picker-range',
+        min_date_allowed=data1['FECHA'].min(),
+        max_date_allowed=data1['FECHA'].max(),
+        initial_visible_month=data1['FECHA'].min(),
+        start_date=data1['FECHA'].min(),
+        end_date=data1['FECHA'].max()
+    ),
+    html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
+    dcc.Graph(id='fig8'),
     tablefunction(data_nc),
     tablefunction(data_c)   
 ])
@@ -369,6 +335,94 @@ def display_hover_datat(hoverData):
     fil_df_inj = fill_data_inj[fill_data_inj['INJURY']==inj_name]
     return fil_df_inj.to_dict("rows")
 
+#Date figures
+def filter_dataframe2(df, level_selector):
+    dff2 = df[df['INJURY'].isin(level_selector)]
+    return dff2
+
+@app.callback(
+    Output('fig7', 'figure'),
+    [Input('level_selector', 'value')])
+def update_figure2(level_selector):
+    fil_df3 = filter_dataframe2(data1, level_selector)
+    days = fil_df3.groupby('DAY').NEXPEDIENTE.nunique().reset_index()
+    #Pie chart days accidents
+    figure7 = px.pie(days, values='NEXPEDIENTE', names='DAY')
+    return figure7
+
+@app.callback(
+    Output('output-container-date-picker-range', 'children'),
+    [Input('my-date-picker-range', 'start_date'),
+     Input('my-date-picker-range', 'end_date')])
+def update_output(start_date, end_date):
+    datast = data1[(data1['FECHA'] >= parse(start_date, dayfirst=True)) & (data1['FECHA'] <= parse(end_date, dayfirst=True))].to_json(orient='split', date_format='iso')
+    return json.dumps(datast)
+
+@app.callback(
+    Output('fig8', 'figure'),
+    [Input('output-container-date-picker-range', 'children')]
+)
+def update_output_graph(data):
+    if data is None:
+        return {}, {}
+    dataset = json.loads(data)
+    df = pd.read_json(dataset, orient='split')
+    #Historical data
+    historical_acc =  df.groupby('FECHA').NEXPEDIENTE.nunique()
+    historical_vic =  df.groupby('FECHA').NEXPEDIENTE.count()
+    historical_fvic = df[df['INJURY'] == 'Fatal'].groupby('FECHA').NEXPEDIENTE.count()
+    historical_data = pd.merge(historical_acc,historical_vic,how='outer', on='FECHA')
+    historical_data = pd.merge(historical_data,historical_fvic, how='outer',on='FECHA').reset_index()
+    historical_data.columns = ['Date','Accidents', 'Victims', 'Fatal victims']
+    historical_data = historical_data.fillna('0')
+    #Bar chart historical
+
+    figure8 = go.Figure(data=[go.Bar(
+        x=historical_data['Date'],
+        y=historical_data['Accidents'],
+        name="Accidents",
+        marker_color='deepskyblue'),
+    go.Bar(x=historical_data.Date,
+        y=historical_data['Victims'],
+        name="Victims",
+        marker_color='dimgray'),
+    go.Bar(x=historical_data.Date,
+        y=historical_data['Fatal victims'],
+        name="Fatal Victims",
+        marker_color='green')])
+
+    figure8.update_layout(
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1,
+                        label="Last m",
+                        step="month",
+                        stepmode="backward"),
+                    dict(count=6,
+                        label="6 m",
+                        step="month",
+                        stepmode="backward"),
+                    dict(count=1,
+                        label="Year",
+                        step="year",
+                        stepmode="backward"),
+                    dict(count=1,
+                        label="YTD",
+                        step="year",
+                        stepmode="todate"),
+                    dict(step="all")
+                ])
+            ),
+            rangeslider=dict(
+                visible=True
+            ),
+            type="date"
+        )
+    )
+    return figure8
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+
+df = data1.to_json()
