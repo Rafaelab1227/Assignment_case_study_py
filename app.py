@@ -2,7 +2,7 @@
 styles = {
     'pre': {
         'border': 'thin lightgrey solid',
-        'overflowX': 'scroll'
+        'overflowY': 'scroll'
     }
 }
 import json
@@ -133,6 +133,13 @@ total_data_vic = data.groupby('TIPO.ACCIDENTE')['NEXPEDIENTE'].count()
 total_data = pd.merge(total_data_acc,total_data_vic, on='TIPO.ACCIDENTE')
 total_data = total_data.rename(columns={'NEXPEDIENTE_x':'Accidents','NEXPEDIENTE_y':'Victims'})
 #total_data
+
+#Subset by type
+fill_data_vic = data.groupby(['TIPO.ACCIDENTE','TIPO.PERSONA'])['NEXPEDIENTE'].count().reset_index()
+fill_data_vic.columns = ['Type of accident','Type of victim', 'Total victims']
+
+#Subset by injury level
+fill_data_inj = data.groupby(['INJURY','RANGO.EDAD'])['NEXPEDIENTE'].count().reset_index()
 
 #Historical data
 days = data1.groupby('DAY').NEXPEDIENTE.nunique().reset_index()
@@ -272,12 +279,15 @@ app.layout = html.Div(children=[
         value=types
     ),  
     dcc.Graph(id='fig1'),
-    html.Pre(id='hover-data', style=styles['pre']),
+    dash_table.DataTable(id='hover-data',
+                        columns=[{"name": i, "id": i} for i in fill_data_vic.columns]),
     dcc.Graph(id='fig2'),
     dcc.Graph(id='fig3'),
     dcc.Graph(id='fig4'),
     dcc.Graph(id='fig5'),
     dcc.Graph(id='fig6'),
+    dash_table.DataTable(id='hover-data2',
+                    columns=[{"name": i, "id": i} for i in fill_data_inj.columns]),
     dcc.Graph(figure=fig7),
     dcc.Graph(figure=fig8),
     tablefunction(data_nc),
@@ -338,25 +348,27 @@ def update_figure(type_selector):
     return figure1, figure2, figure3, figure4, figure5, figure6  
 
 
-""" @app.callback(
-    Output('my-table', 'data'),
-    [Input('fig1', 'hoverData')])
-def display_selected_data(selected_data):
-    if selected_data is None or len(selected_data) == 0:
-        return []
-
-    points = selected_data['points']
-    if len(points) == 0:
-        return []
-
-    names = [x['text'] for x in points]
-    return data[data['TIPO.ACCIDENTE'].isin(names)].to_dict("rows")
- """
 @app.callback(
-    Output('hover-data', 'children'),
+    Output('hover-data', 'data'),
     [Input('fig1', 'hoverData')])
 def display_hover_data(hoverData):
-    return json.dumps(hoverData, indent=2)
+    type_name = hoverData['points'][0]['x']
+    if len(type_name) == 0:
+        return []
+    fil_df_type = fill_data_vic[fill_data_vic['Type of accident']==type_name]
+    return fil_df_type.to_dict("rows")
+    #json.dumps(hoverData, indent=2)
+
+@app.callback(
+    Output('hover-data2', 'data'),
+    [Input('fig6', 'hoverData')])
+def display_hover_datat(hoverData):
+    inj_name = hoverData['points'][0]['x']
+    if len(inj_name) == 0:
+        return []
+    fil_df_inj = fill_data_inj[fill_data_inj['INJURY']==inj_name]
+    return fil_df_inj.to_dict("rows")
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
