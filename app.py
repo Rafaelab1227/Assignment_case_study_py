@@ -254,6 +254,10 @@ app.layout = html.Div(children=[
         start_date=data1['FECHA'].min(),
         end_date=data1['FECHA'].max()
     ),
+    dbc.Button('Update filter', 
+                           color="warning", 
+                           className="mr-1",
+                           id='my-button'),
     html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
     dcc.Graph(id='fig8'),
     tablefunction(data_nc),
@@ -352,9 +356,10 @@ def update_figure2(level_selector):
 
 @app.callback(
     Output('output-container-date-picker-range', 'children'),
-    [Input('my-date-picker-range', 'start_date'),
-     Input('my-date-picker-range', 'end_date')])
-def update_output(start_date, end_date):
+    [Input('my-button', 'n_clicks')],
+    [State('my-date-picker-range', 'start_date'),
+     State('my-date-picker-range', 'end_date')])
+def update_output(n_clicks,start_date, end_date):
     datast = data1[(data1['FECHA'] >= parse(start_date, dayfirst=True)) & (data1['FECHA'] <= parse(end_date, dayfirst=True))].to_json(orient='split', date_format='iso')
     return json.dumps(datast)
 
@@ -424,5 +429,3 @@ def update_output_graph(data):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-df = data1.to_json()
