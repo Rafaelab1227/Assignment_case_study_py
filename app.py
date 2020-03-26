@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+styles = {
+    'pre': {
+        'border': 'thin lightgrey solid',
+        'overflowX': 'scroll'
+    }
+}
+import json
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -185,6 +193,9 @@ data_c.columns= ["Street", "Number", "District", "Age", "Type of accident"]# com
 import plotly.express as px
 import plotly.graph_objects as go
 
+#Hover
+import dash_table
+
 #Simple plot for total
 total_data_pl = total_data.unstack().reset_index()
 total_data_pl.columns = ['Variable', 'TIPO.ACCIDENTE', 'Total']
@@ -261,6 +272,7 @@ app.layout = html.Div(children=[
         value=types
     ),  
     dcc.Graph(id='fig1'),
+    html.Pre(id='hover-data', style=styles['pre']),
     dcc.Graph(id='fig2'),
     dcc.Graph(id='fig3'),
     dcc.Graph(id='fig4'),
@@ -288,6 +300,7 @@ def update_figure(type_selector):
     #Total
     fil_df = filter_dataframe(total_data_pl,type_selector)
     figure1 =px.bar(fil_df, x="TIPO.ACCIDENTE", y="Total", color='Variable', barmode='group')
+    
     #District
     fil_df2 = filter_dataframe(data,type_selector)
         #Plot per ditrict accidents
@@ -323,5 +336,27 @@ def update_figure(type_selector):
                 textposition='auto'
             )])
     return figure1, figure2, figure3, figure4, figure5, figure6  
+
+
+""" @app.callback(
+    Output('my-table', 'data'),
+    [Input('fig1', 'hoverData')])
+def display_selected_data(selected_data):
+    if selected_data is None or len(selected_data) == 0:
+        return []
+
+    points = selected_data['points']
+    if len(points) == 0:
+        return []
+
+    names = [x['text'] for x in points]
+    return data[data['TIPO.ACCIDENTE'].isin(names)].to_dict("rows")
+ """
+@app.callback(
+    Output('hover-data', 'children'),
+    [Input('fig1', 'hoverData')])
+def display_hover_data(hoverData):
+    return json.dumps(hoverData, indent=2)
+
 if __name__ == '__main__':
     app.run_server(debug=True)
