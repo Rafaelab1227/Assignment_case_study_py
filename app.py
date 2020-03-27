@@ -243,7 +243,7 @@ Presentation about app.
 The data presented is availbale until:
 '''
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -318,7 +318,7 @@ app.layout = \
                                             end_date=data1['FECHA'].max()
                                         ),
                                         dbc.Button('Update filter', 
-                                                            color="warning", 
+                                                            color="primary", 
                                                             className="mr-1",
                                                             id='my-button'),
                                         html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
@@ -365,8 +365,16 @@ app.layout = \
                                                     }
                                                 }
                                             ),
-                                            tablefunction(data_nc),
-                                            tablefunction(data_c) 
+                                            dbc.Button('Cases that could not be geolocated', 
+                                                            color="primary", 
+                                                            className="mr-1",
+                                                            id='my-button2'),
+                                            html.Div(id='table1'),
+                                            dbc.Button('Cases geolocated', 
+                                                            color="primary", 
+                                                            className="mr-1",
+                                                            id='my-button3'),
+                                            html.Div(id='table2')               
                                         ])
                                     ])
                     ])
@@ -726,6 +734,26 @@ def update_output_graph(data):
         )
     )
     return figure8
+
+@app.callback(
+    Output('table1', 'children'),
+    [Input('my-button2', 'n_clicks')]
+)
+def on_button_click(n):
+    if n is None:
+        return []
+    else:
+        return tablefunction(data_nc)
+
+@app.callback(
+    Output('table2', 'children'),
+    [Input('my-button3', 'n_clicks')]
+)
+def on_button_click2(n):
+    if n is None:
+        return []
+    else:
+        return tablefunction(data_c)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
