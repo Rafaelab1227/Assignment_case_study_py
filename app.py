@@ -180,6 +180,8 @@ for i in range(len(locations)):
 data_vic = data[data['INJURY'] == 'Fatal']
 data_vic = pd.concat([data_vic.reset_index(drop=True), results], axis=1)
 list(data_vic.columns)
+loc = data_vic.dropna(subset=['lat', 'lon']).reset_index()
+
 data_c = data_vic.dropna(subset=['lat', 'lon']).reset_index()
 data_nc = data_vic[pd.isnull(data_vic).any(axis=1)].reset_index()
 data_c = data_c[['CALLE','NUMERO','DISTRITO','RANGO.EDAD','TIPO.ACCIDENTE']]
@@ -253,33 +255,135 @@ app.layout = \
                 style={'textAlign': 'left',
                        'margin': '48px 0',
                        'fontFamily': 'system-ui'}),
-        html.Div([
-            dcc.Tabs(id="tabs",
-                     vertical=True,
-                     parent_style={'flex-direction': 'column',
-                                   '-webkit-flex-direction': 'column',
-                                   '-ms-flex-direction': 'column',
-                                   'display': 'flex'},
-                     children=[dcc.Tab(label='Description', value=1),
-                               dcc.Tab(label='Type', value=2),
-                               dcc.Tab(label='Date', value=3),
-                               dcc.Tab(label='Location', value=4)])],
-            style={'width': '25%',
-                   'float': 'left'}),
-        html.Div(id='tab-out',
-                 style={'width': '75%', 'float': 'right'})])
+        dcc.Tabs(id="tabs",
+                parent_style={'flex-direction': 'column',
+                            '-webkit-flex-direction': 'column',
+                            '-ms-flex-direction': 'column',
+                            'display': 'flex'},
+                children=[
+                    dcc.Tab(label='Description',
+                            children = [
+                                        html.Div([
+                                            html.Br(),
+                                        ], className="one column"),
+                                        html.Div([
+                                            dcc.Markdown(markdown_text),
+                                            html.H6(max_date)    
+                                            ],className="eleven columns")
+                                        ]),
+                    dcc.Tab(label='Type',
+                            children = [
+                                        html.Div([
+                                            html.Br(),
+                                            html.H4("Select type of accident"),
+                                            dcc.Checklist(
+                                            id="type_selector",
+                                            options=types_dict,
+                                            value=types
+                                        )
+                                        ],className="three columns"),
+                                        html.Div(children=[ 
+                                            html.Br(),
+                                            dcc.Tabs(id="tabs2", children=[
+                                                dcc.Tab(label='Total', children=[
+                                                        dcc.Graph(id='fig1'),
+                                                        dash_table.DataTable(id='hover-data',
+                                                                            columns=[{"name": i, "id": i} for i in fill_data_vic.columns])
+                                                ]),
+                                                dcc.Tab(label='Accidents per district', children=[
+                                                        dcc.Graph(id='fig2'),
+                                                        dcc.Graph(id='fig3')
+                                                ]),
+                                                dcc.Tab(label='Weather', children=[
+                                                        dcc.Graph(id='fig4'),
+                                                        dcc.Graph(id='fig5')
+                                                ]),
+                                                dcc.Tab(label='Injury Level', children=[
+                                                        dcc.Graph(id='fig6'),
+                                                        dash_table.DataTable(id='hover-data2',
+                                                            columns=[{"name": i, "id": i} for i in fill_data_inj.columns])
+                                                ])
+                                            ])
+                                        ], className="nine columns")
+                                    ]),
+                    dcc.Tab(label='Date',
+                            children = [
+                                        html.Div([
+                                        dcc.DatePickerRange(
+                                            id='my-date-picker-range',
+                                            min_date_allowed=data1['FECHA'].min(),
+                                            max_date_allowed=data1['FECHA'].max(),
+                                            initial_visible_month=data1['FECHA'].min(),
+                                            start_date=data1['FECHA'].min(),
+                                            end_date=data1['FECHA'].max()
+                                        ),
+                                        dbc.Button('Update filter', 
+                                                            color="warning", 
+                                                            className="mr-1",
+                                                            id='my-button'),
+                                        html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
+                                        dcc.Graph(id='fig8'),
+                                        dcc.Checklist(
+                                            id="level_selector",
+                                            options=levels_dict,
+                                            value=levels
+                                        ),
+                                        dcc.Graph(id='fig7')
+                                        ])
+                                    ]),
+                    dcc.Tab(label='Location',
+                            children = [
+                                        html.Div([
+                                            dcc.Graph(
+                                                id='graph9',
+                                                figure={
+                                                    'data': [{
+                                                        'lat': loc.lat, 'lon': loc.lon, 'type': 'scattermapbox',
+                                                        'mode':'markers'
+                                                    }],
+                                                    'layout': {
+                                                        'mapbox': {
+                                                            'accesstoken': (
+                                                                'pk.eyJ1IjoiY2hyaWRkeXAiLCJhIjoiY2ozcGI1MTZ3M' +
+                                                                'DBpcTJ3cXR4b3owdDQwaCJ9.8jpMunbKjdq1anXwU5gxIw'
+                                                            ),
+                                                            'center' : go.layout.mapbox.Center(
+                                                                                    lat=-3,
+                                                                                    lon=40
+                                                                                ),
+                                                            'style': "outdoors", 'zoom': 0.7
+                                                        },
+                                                        'showlegend' : False,
+                                                        'margin': {
+                                                            'l': 0, 'r': 0, 'b': 0, 't': 0
+                                                        },
+                                                    }
+                                                }
+                                            ),
+                                            tablefunction(data_nc),
+                                            tablefunction(data_c) 
+                                        ])
+                                    ])
+                    ])
+])
 
+""" 
 
 #Functions
 @app.callback(Output('tab-out', 'children'),
             [Input('tabs', 'value')])
 def tab_content(tabs_value):
-    """return s.th. based on tabs_value"""
+    return s.th. based on tabs_value
     if tabs_value == 1:
-        children = html.Div([
-            dcc.Markdown(markdown_text),
-            html.H6(max_date)    
-            ])
+        children = [
+            html.Div([
+                html.Br(),
+            ], className="one column"),
+            html.Div([
+                dcc.Markdown(markdown_text),
+                html.H6(max_date)    
+                ],className="eleven columns")
+        ]
     elif tabs_value == 2:
         children = [
             html.Div([
@@ -287,18 +391,30 @@ def tab_content(tabs_value):
                 id="type_selector",
                 options=types_dict,
                 value=types
-            ),  
-            dcc.Graph(id='fig1'),
-            dash_table.DataTable(id='hover-data',
-                                columns=[{"name": i, "id": i} for i in fill_data_vic.columns]),
-            dcc.Graph(id='fig2'),
-            dcc.Graph(id='fig3'),
-            dcc.Graph(id='fig4'),
-            dcc.Graph(id='fig5'),
-            dcc.Graph(id='fig6'),
-            dash_table.DataTable(id='hover-data2',
-                            columns=[{"name": i, "id": i} for i in fill_data_inj.columns])
-            ])
+            )
+            ],className="three columns"),
+            html.Div(children=[ 
+                dcc.Tabs(id="tabs", children=[
+                    dcc.Tab(label='Total', children=[
+                            dcc.Graph(id='fig1'),
+                            dash_table.DataTable(id='hover-data',
+                                                columns=[{"name": i, "id": i} for i in fill_data_vic.columns])
+                    ]),
+                    dcc.Tab(label='Accidents per district', children=[
+                            dcc.Graph(id='fig2'),
+                            dcc.Graph(id='fig3')
+                    ]),
+                    dcc.Tab(label='Weather', children=[
+                            dcc.Graph(id='fig4'),
+                            dcc.Graph(id='fig5')
+                    ]),
+                    dcc.Tab(label='Injury Level', children=[
+                            dcc.Graph(id='fig6'),
+                            dash_table.DataTable(id='hover-data2',
+                                columns=[{"name": i, "id": i} for i in fill_data_inj.columns])
+                    ])
+                ])
+            ], className="nine columns")
         ]
     elif tabs_value == 3:
         children = [
@@ -327,7 +443,7 @@ def tab_content(tabs_value):
             ])
         ]
 
-    else:
+    elif tabs_value == 4:
         children = [
             html.Div([
                 tablefunction(data_nc),
@@ -335,7 +451,7 @@ def tab_content(tabs_value):
             ])
         ]
 
-    return children
+    return children """
 
 """ app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
