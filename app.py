@@ -339,7 +339,12 @@ app.layout = \
                                                 figure={
                                                     'data': [{
                                                         'lat': loc.lat, 'lon': loc.lon, 'type': 'scattermapbox',
-                                                        'mode':'markers'
+                                                        'mode':'markers',
+                                                        'marker': go.scattermapbox.Marker(
+                                                            size=17,
+                                                            color='rgb(255, 0, 0)',
+                                                            opacity=0.7
+                                                        )
                                                     }],
                                                     'layout': {
                                                         'mapbox': {
@@ -348,10 +353,10 @@ app.layout = \
                                                                 'DBpcTJ3cXR4b3owdDQwaCJ9.8jpMunbKjdq1anXwU5gxIw'
                                                             ),
                                                             'center' : go.layout.mapbox.Center(
-                                                                                    lat=-3,
-                                                                                    lon=40
+                                                                                    lat=40.46,
+                                                                                    lon=-3.66
                                                                                 ),
-                                                            'style': "outdoors", 'zoom': 0.7
+                                                            'style': "outdoors", 'zoom': 12
                                                         },
                                                         'showlegend' : False,
                                                         'margin': {
