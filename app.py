@@ -337,7 +337,7 @@ app.layout = \
                                                             id='my-button'),
                                         html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
                                         dcc.Graph(id='fig8'),
-                                        html.Div([html.H5("Percentage of historical accidents based on the day that occured")], className= 'product4'),
+                                        html.Div([html.H5("Percentage of historical accidents based on the day that occured and the injury level")], className= 'product4'),
                                         dcc.Checklist(
                                             id="level_selector",
                                             options=levels_dict,
@@ -395,151 +395,6 @@ app.layout = \
                     ])
 ])
 
-""" 
-
-#Functions
-@app.callback(Output('tab-out', 'children'),
-            [Input('tabs', 'value')])
-def tab_content(tabs_value):
-    return s.th. based on tabs_value
-    if tabs_value == 1:
-        children = [
-            html.Div([
-                html.Br(),
-            ], className="one column"),
-            html.Div([
-                dcc.Markdown(markdown_text),
-                html.H6(max_date)    
-                ],className="eleven columns")
-        ]
-    elif tabs_value == 2:
-        children = [
-            html.Div([
-                dcc.Checklist(
-                id="type_selector",
-                options=types_dict,
-                value=types
-            )
-            ],className="three columns"),
-            html.Div(children=[ 
-                dcc.Tabs(id="tabs", children=[
-                    dcc.Tab(label='Total', children=[
-                            dcc.Graph(id='fig1'),
-                            dash_table.DataTable(id='hover-data',
-                                                columns=[{"name": i, "id": i} for i in fill_data_vic.columns])
-                    ]),
-                    dcc.Tab(label='Accidents per district', children=[
-                            dcc.Graph(id='fig2'),
-                            dcc.Graph(id='fig3')
-                    ]),
-                    dcc.Tab(label='Weather', children=[
-                            dcc.Graph(id='fig4'),
-                            dcc.Graph(id='fig5')
-                    ]),
-                    dcc.Tab(label='Injury Level', children=[
-                            dcc.Graph(id='fig6'),
-                            dash_table.DataTable(id='hover-data2',
-                                columns=[{"name": i, "id": i} for i in fill_data_inj.columns])
-                    ])
-                ])
-            ], className="nine columns")
-        ]
-    elif tabs_value == 3:
-        children = [
-            html.Div([
-            dcc.DatePickerRange(
-                id='my-date-picker-range',
-                min_date_allowed=data1['FECHA'].min(),
-                max_date_allowed=data1['FECHA'].max(),
-                initial_visible_month=data1['FECHA'].min(),
-                start_date=data1['FECHA'].min(),
-                end_date=data1['FECHA'].max()
-            ),
-            dbc.Button('Update filter', 
-                                color="warning", 
-                                className="mr-1",
-                                id='my-button'),
-            html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
-            dcc.Graph(id='fig8'),
-            dcc.Checklist(
-                id="level_selector",
-                options=levels_dict,
-                value=levels
-            ),
-            dcc.Graph(id='fig7')
-
-            ])
-        ]
-
-    elif tabs_value == 4:
-        children = [
-            html.Div([
-                tablefunction(data_nc),
-                tablefunction(data_c) 
-            ])
-        ]
-
-    return children """
-
-""" app.layout = html.Div(children=[
-    html.H1(children='Hello Dash'),
-
-    dcc.Tabs(id="tabs", vertical=True,children=[
-        # Defining the layout of the first Tab
-        dcc.Tab(label='Description', children=[
-            html.Br(),
-            html.Br(),
-            html.Div(children='''
-        Dash: A web application framework for Python.
-    ''')
-        ]),
-        dcc.Tab(label='Type', children=[
-            html.Br(),
-            dcc.Checklist(
-                id="type_selector",
-                options=types_dict,
-                value=types
-            ),  
-            dcc.Graph(id='fig1'),
-            dash_table.DataTable(id='hover-data',
-                                columns=[{"name": i, "id": i} for i in fill_data_vic.columns]),
-            dcc.Graph(id='fig2'),
-            dcc.Graph(id='fig3'),
-            dcc.Graph(id='fig4'),
-            dcc.Graph(id='fig5'),
-            dcc.Graph(id='fig6'),
-            dash_table.DataTable(id='hover-data2',
-                            columns=[{"name": i, "id": i} for i in fill_data_inj.columns])
-        ]),
-        dcc.Tab(label='Date', children=[
-            dcc.DatePickerRange(
-                id='my-date-picker-range',
-                min_date_allowed=data1['FECHA'].min(),
-                max_date_allowed=data1['FECHA'].max(),
-                initial_visible_month=data1['FECHA'].min(),
-                start_date=data1['FECHA'].min(),
-                end_date=data1['FECHA'].max()
-            ),
-            dbc.Button('Update filter', 
-                                color="warning", 
-                                className="mr-1",
-                                id='my-button'),
-            html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
-            dcc.Graph(id='fig8'),
-            dcc.Checklist(
-                id="level_selector",
-                options=levels_dict,
-                value=levels
-            ),
-            dcc.Graph(id='fig7'),
-        ]),
-        dcc.Tab(label='Location', children=[
-            tablefunction(data_nc),
-            tablefunction(data_c)   
-        ])
-    ])
-]) """
-
 def filter_dataframe(df, type_selector):
     dff = df[df['TIPO.ACCIDENTE'].isin(type_selector)]
     return dff
@@ -555,7 +410,7 @@ def filter_dataframe(df, type_selector):
 def update_figure(type_selector):
     #Total
     fil_df = filter_dataframe(total_data_pl,type_selector)
-    figure1 =px.bar(fil_df, x="TIPO.ACCIDENTE", y="Total", color='Variable', barmode='group')
+    figure1 =px.bar(fil_df, x="TIPO.ACCIDENTE", y="Total", color='Variable', barmode='group',labels = {'x':'Type of accident', 'y':'Total'})
     
     #District
     fil_df2 = filter_dataframe(data,type_selector)
