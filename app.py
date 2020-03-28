@@ -251,10 +251,11 @@ app.config['suppress_callback_exceptions'] = True
 # Layout
 app.layout = \
     html.Div([
-        html.H1('Madrid Trafic Accidents 2020',
+        html.Div([html.H1('Madrid Trafic Accidents 2020',
                 style={'textAlign': 'left',
                        'margin': '48px 0',
-                       'fontFamily': 'system-ui'}),
+                       'fontFamily': 'system-ui'})
+        ],className= 'product4'),
         dcc.Tabs(id="tabs",
                 parent_style={'flex-direction': 'column',
                             '-webkit-flex-direction': 'column',
@@ -268,7 +269,13 @@ app.layout = \
                                         ], className="one column"),
                                         html.Div([
                                             dcc.Markdown(markdown_text),
-                                            html.H6(max_date)    
+                                            html.H6(max_date),
+                                            html.Div([html.H5("Total accidents"),
+                                            html.H6(total_acc)], className= 'product'),
+                                            html.Div([html.H5("Total victims"),
+                                            html.H6(total_vic)], className= 'product2'),
+                                            html.Div([html.H5("Total fatal victims"),
+                                            html.H6(total_fvic)], className= 'product3')    
                                             ],className="eleven columns")
                                         ]),
                     dcc.Tab(label='Type',
@@ -286,19 +293,25 @@ app.layout = \
                                             html.Br(),
                                             dcc.Tabs(id="tabs2", children=[
                                                 dcc.Tab(label='Total', children=[
+                                                    html.Div([html.H5("Total number of victims and accidents")], className= 'product4'),
                                                         dcc.Graph(id='fig1'),
                                                         dash_table.DataTable(id='hover-data',
                                                                             columns=[{"name": i, "id": i} for i in fill_data_vic.columns])
                                                 ]),
                                                 dcc.Tab(label='Accidents per district', children=[
+                                                        html.Div([html.H5("Number of accidents per district")], className= 'product4'),
                                                         dcc.Graph(id='fig2'),
+                                                        html.Div([html.H5("Number of victims per district")], className= 'product4'),
                                                         dcc.Graph(id='fig3')
                                                 ]),
                                                 dcc.Tab(label='Weather', children=[
+                                                        html.Div([html.H5("Number of accidents based on the weather of the day")], className= 'product4'),
                                                         dcc.Graph(id='fig4'),
+                                                        html.Div([html.H5("Number of victims based on the weather of the accident day")], className= 'product4'),
                                                         dcc.Graph(id='fig5')
                                                 ]),
                                                 dcc.Tab(label='Injury Level', children=[
+                                                        html.Div([html.H5("Number of victims based on the level of injury register")], className= 'product4'),
                                                         dcc.Graph(id='fig6'),
                                                         dash_table.DataTable(id='hover-data2',
                                                             columns=[{"name": i, "id": i} for i in fill_data_inj.columns])
@@ -309,6 +322,7 @@ app.layout = \
                     dcc.Tab(label='Date',
                             children = [
                                         html.Div([
+                                        html.Div([html.H5("Historical statistics since january 2019 until available information")], className= 'product4'),
                                         dcc.DatePickerRange(
                                             id='my-date-picker-range',
                                             min_date_allowed=data1['FECHA'].min(),
@@ -323,6 +337,7 @@ app.layout = \
                                                             id='my-button'),
                                         html.Div(id='output-container-date-picker-range', style={'display': 'none'}),
                                         dcc.Graph(id='fig8'),
+                                        html.Div([html.H5("Percentage of historical accidents based on the day that occured")], className= 'product4'),
                                         dcc.Checklist(
                                             id="level_selector",
                                             options=levels_dict,

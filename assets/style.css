@@ -41,6 +41,33 @@
     background: #98151b;
     color: #ffffff;
   }
+  .product2 {
+    position: relative;
+    height: 15%;
+    padding: 30px;
+    margin-bottom: 25px;
+    border-radius: 1px;
+    background: #82b74b;
+    color: #ffffff;
+  }
+  .product3 {
+    position: relative;
+    height: 15%;
+    padding: 30px;
+    margin-bottom: 25px;
+    border-radius: 1px;
+    background: #034f84;
+    color: #ffffff;
+  }
+  .product4 {
+    position: relative;
+    height: 15%;
+    padding: 30px;
+    margin-bottom: 25px;
+    border-radius: 1px;
+    background: #4c1b52;
+    color: #ffffff;
+  }
 /* Grid
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .container {
