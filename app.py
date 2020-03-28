@@ -120,9 +120,13 @@ levels_dict = [{'label': x, 'value': x} for x in levels]
 
 #Total accidents 2020
 total_acc = data.NEXPEDIENTE.nunique()
+total_acc_his = data1.NEXPEDIENTE.nunique()
+
 #total_acc
 #Total victims
 total_vic = data.NEXPEDIENTE.count()
+total_vic_his = data.NEXPEDIENTE.count()
+
 #total_vic
 #Total fatal victims
 total_fvic = data[data['INJURY'] == 'Fatal'].NEXPEDIENTE.count()
@@ -323,6 +327,10 @@ app.layout = \
                             children = [
                                         html.Div([
                                         html.Div([html.H5("Historical statistics since january 2019 until available information")], className= 'product4'),
+                                        html.Div([html.H5("Total accidents"),
+                                            html.H6(total_acc_his)], className= 'product5'),
+                                        html.Div([html.H5("Total victims"),
+                                            html.H6(total_vic_his)], className= 'product5'),
                                         dcc.DatePickerRange(
                                             id='my-date-picker-range',
                                             min_date_allowed=data1['FECHA'].min(),
@@ -349,6 +357,7 @@ app.layout = \
                     dcc.Tab(label='Location',
                             children = [
                                         html.Div([
+                                            html.Div([html.H5("Location of accidents which involved fatal victims")], className= 'product4'),
                                             dcc.Graph(
                                                 id='graph9',
                                                 figure={
@@ -410,7 +419,7 @@ def filter_dataframe(df, type_selector):
 def update_figure(type_selector):
     #Total
     fil_df = filter_dataframe(total_data_pl,type_selector)
-    figure1 =px.bar(fil_df, x="TIPO.ACCIDENTE", y="Total", color='Variable', barmode='group',labels = {'x':'Type of accident', 'y':'Total'})
+    figure1 =px.bar(fil_df, x="TIPO.ACCIDENTE", y="Total", color='Variable', barmode='group', labels = {'x' : 'Type of accident'})
     
     #District
     fil_df2 = filter_dataframe(data,type_selector)
@@ -448,6 +457,8 @@ def update_figure(type_selector):
     Output('hover-data', 'data'),
     [Input('fig1', 'hoverData')])
 def display_hover_data(hoverData):
+    if hoverData is None or len(hoverData) == 0:
+        return []
     type_name = hoverData['points'][0]['x']
     if len(type_name) == 0:
         return []
@@ -459,6 +470,8 @@ def display_hover_data(hoverData):
     Output('hover-data2', 'data'),
     [Input('fig6', 'hoverData')])
 def display_hover_datat(hoverData):
+    if hoverData is None or len(hoverData) == 0:
+        return []
     inj_name = hoverData['points'][0]['x']
     if len(inj_name) == 0:
         return []
