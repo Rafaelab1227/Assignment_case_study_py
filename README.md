@@ -9,3 +9,4 @@ Data Tidying and Reporting
 Rafaela Becerra
 
 App create in Dash Python: 
+[About documentation](https://rafaelab1227.github.io/Assignment_case_study_py/About_app.html#/)
