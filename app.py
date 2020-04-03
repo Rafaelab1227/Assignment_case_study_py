@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
+# Module import------------------------------------------------------
 import json
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -8,13 +7,15 @@ from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from datetime import datetime
 from dateutil.parser import parse
-
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
 import pandas as pd
 import requests
 import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+import dash_table
 
+
+#Load data sets ------------------------------------------------------
 url_1="https://datos.madrid.es/egob/catalogo/300228-21-accidentes-trafico-detalle.csv"
 data_1 = pd.read_csv(url_1, sep=";", encoding="latin1")
 #data_1.head()
@@ -88,7 +89,7 @@ data1['DAY'] = data1['FECHA'].dt.strftime('%A')
 #data1['FECHA'] = data1['FECHA'].dt.strftime('%d/%m/%Y')
 #data1.dtypes
 
-#Create historical data
+##Create data outputs ------------------------------------------------------
 
 #Min data
 min_date = data1['FECHA'].min().strftime('%d/%m/%Y')
@@ -96,7 +97,6 @@ min_date = data1['FECHA'].min().strftime('%d/%m/%Y')
 max_date = data1['FECHA'].max().strftime('%d/%m/%Y')
 #max_date
 
-#Create data outputs
 #Date victims, accidents and fatal victims
 data_date = data1.groupby('FECHA')['NEXPEDIENTE'].count()
 #data_date.head()
@@ -146,17 +146,7 @@ fill_data_vic.columns = ['Type of accident','Type of victim', 'Total victims']
 #Subset by injury level
 fill_data_inj = data.groupby(['INJURY','RANGO.EDAD'])['NEXPEDIENTE'].count().reset_index()
 
-
-# data1.groupby(['TIPO.VEHICULO']).groups.keys()
-# data1.groupby('DAY')['NEXPEDIENTE'].count()
-# data1.groupby('ESTADO.METEREOLOGICO')['NEXPEDIENTE'].count()
-# data1.groupby('ESTADO.METEREOLOGICO').data1['DAY']=='Monday'.count()
-# data1[data1['INJURY'] == 'Fatal'].groupby('DAY')['NEXPEDIENTE'].count()
-# data1[data1['INJURY'] == 'Fatal'].groupby(['DAY','NEXPEDIENTE']).count()
-# data1[data1['INJURY'] == 'Fatal'].groupby('DAY').NEXPEDIENTE.nunique()
-# data1.groupby('INJURY')['NEXPEDIENTE'].count()
-
-#Geolocalization function
+#Geolocalization function ------------------------------------------------------
 locations = data[data['INJURY'] == 'Fatal'].ADDRESS
 #locations
 
@@ -194,20 +184,13 @@ list(data_nc.columns)
 data_nc.columns= ["Street", "Number", "District", "Age", "Type of accident"] # no complete
 data_c.columns= ["Street", "Number", "District", "Age", "Type of accident"]# complete cases with geolocation
 
-#Test plots
-import plotly.express as px
-import plotly.graph_objects as go
-
-#Hover
-import dash_table
-
 #Simple plot for total
 total_data_pl = total_data.unstack().reset_index()
 total_data_pl.columns = ['Variable', 'TIPO.ACCIDENTE', 'Total']
 
 
 
-#Tables
+#Tables ------------------------------------------------------
 #Table map
 def tablefunction(dataframe):
     return html.Table([
@@ -221,6 +204,7 @@ def tablefunction(dataframe):
         ])
     ])
 
+#Texts ------------------------------------------------------
 markdown_text1 = '''
 #### About
 This is a reporting tool which aims to present some relevant information
@@ -251,6 +235,8 @@ The data presented is availbale until:
 markdown_text3 = '''
 Thest:
 '''
+
+#Incons references external sheet ------------------------------------------------------
 external_stylesheets = [
 {
     'href': 'https://use.fontawesome.com/releases/v5.8.1/css/all.css',
@@ -262,7 +248,7 @@ external_stylesheets = [
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.config['suppress_callback_exceptions'] = True
-# Layout
+#Layout ------------------------------------------------------
 app.layout = \
     html.Div([
         html.Div([html.H1('Madrid Trafic Accidents 2020',
@@ -430,6 +416,7 @@ app.layout = \
                     ])
 ])
 
+#Functions ------------------------------------------------------
 def filter_dataframe(df, type_selector):
     dff = df[df['TIPO.ACCIDENTE'].isin(type_selector)]
     return dff
@@ -460,16 +447,16 @@ def update_figure(type_selector):
         yaxis_title="Victims",
     )
     #Weather
-    #Pie chart weather victims
+        #Pie chart weather victims
     weather_vic = fil_df2.groupby('ESTADO.METEREOLOGICO')['NEXPEDIENTE'].count().reset_index()
     figure4 = px.pie(weather_vic, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
-    #Pie chart weather accidents
+        #Pie chart weather accidents
     weather_acc = fil_df2.groupby(['ESTADO.METEREOLOGICO']).NEXPEDIENTE.nunique().reset_index()
     figure5 = px.pie(weather_acc, values='NEXPEDIENTE', names='ESTADO.METEREOLOGICO')
 
     #Injury
     injury_vic = fil_df2.groupby(['INJURY'])['NEXPEDIENTE'].count().reset_index()
-    #Injury level
+        #Injury level
     figure6 = go.Figure(data=[go.Bar(
                 x=injury_vic['INJURY'],
                 y=injury_vic['NEXPEDIENTE'],
@@ -478,7 +465,7 @@ def update_figure(type_selector):
             )])
     return figure1, figure2, figure3, figure4, figure5, figure6  
 
-
+#Hover
 @app.callback(
     Output('hover-data', 'data'),
     [Input('fig1', 'hoverData')])
