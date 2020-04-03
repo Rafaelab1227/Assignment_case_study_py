@@ -221,7 +221,7 @@ def tablefunction(dataframe):
         ])
     ])
 
-markdown_text = '''
+markdown_text1 = '''
 #### About
 This is a reporting tool which aims to present some relevant information
 about traffic accidents in Madrid. The dataset use is part of the open
@@ -232,6 +232,8 @@ updated way colleting the data from the website. Additionally, some
 information is presented as a historical look using the unified data
  available from january 2019.
 
+'''
+markdown_text2 = '''
 The contents of the tabs are:
 
 - Type: information about the total number of accidents per type, number of accidents per district, type of weather and injury level.
@@ -246,9 +248,17 @@ Presentation about app.
 
 The data presented is availbale until:
 '''
-
-#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
+markdown_text3 = '''
+Thest:
+'''
+external_stylesheets = [
+{
+    'href': 'https://use.fontawesome.com/releases/v5.8.1/css/all.css',
+    'rel': 'stylesheet',
+    'integrity': 'sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf',
+    'crossorigin': 'anonymous'
+}
+]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.config['suppress_callback_exceptions'] = True
@@ -266,13 +276,25 @@ app.layout = \
                             '-ms-flex-direction': 'column',
                             'display': 'flex'},
                 children=[
-                    dcc.Tab(label='Description',
+                    dcc.Tab(className="fa fa-binoculars fa-lg",
+                            label='      Description',
                             children = [
                                         html.Div([
                                             html.Br(),
                                         ], className="one column"),
                                         html.Div([
-                                            dcc.Markdown(markdown_text),
+                                            html.Div([
+                                            dcc.Markdown(markdown_text1)
+                                        ], className="six columns"),
+                                            html.Div([
+                                            html.Br(),
+                                            html.Img(id='image', 
+                                                src=('https://www.stepsrelocation.com/wp-content/uploads/2019/03/madrid-central-1.jpg)'),
+                                                width='40%',
+                                                height='50%')
+                                        ], className="six columns"),
+                                            html.Div([
+                                            dcc.Markdown(markdown_text2),
                                             html.H6(max_date),
                                             html.Div([html.H5("Total accidents"),
                                             html.H6(total_acc)], className= 'product'),
@@ -280,9 +302,11 @@ app.layout = \
                                             html.H6(total_vic)], className= 'product2'),
                                             html.Div([html.H5("Total fatal victims"),
                                             html.H6(total_fvic)], className= 'product3')    
+                                            ], className="eleven columns")
                                             ],className="eleven columns")
                                         ]),
-                    dcc.Tab(label='Type',
+                    dcc.Tab(className="fa fa-bus-alt fa-lg",
+                            label='      Type',
                             children = [
                                         html.Div([
                                             html.Br(),
@@ -323,7 +347,8 @@ app.layout = \
                                             ])
                                         ], className="nine columns")
                                     ]),
-                    dcc.Tab(label='Date',
+                    dcc.Tab(className="fa fa-calendar-alt fa-lg",
+                            label='      Date',
                             children = [
                                         html.Div([
                                         html.Div([html.H5("Historical statistics since january 2019 until available information")], className= 'product4'),
@@ -354,7 +379,8 @@ app.layout = \
                                         dcc.Graph(id='fig7')
                                         ])
                                     ]),
-                    dcc.Tab(label='Location',
+                    dcc.Tab(className="fa fa-map-marked-alt fa-lg",
+                            label='      Location',
                             children = [
                                         html.Div([
                                             html.Div([html.H5("Location of accidents which involved fatal victims")], className= 'product4'),
