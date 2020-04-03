@@ -31,10 +31,6 @@ data_2 = data_2.rename(columns={"RANGO EDAD":"RANGO DE EDAD"})
 data_1 = data_1.append(pd.DataFrame(data = data_2), ignore_index=True)
 data1 = data_1
 data1.dtypes
-#import os
-#c=pd.read_csv("2020_Accidentalidad.csv", sep=";", encoding="latin1" )
-#c.head()
-#app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 # Changes in dataset ------------------------------------------------------
 # Changes in column names
